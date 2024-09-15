@@ -1,79 +1,29 @@
-import tkinter as tk
-from tkinter import Button
-import cv2
 from ultralytics import YOLO
 
-#       INNEHOLD AV DETTE KODEN:
-    # Linje 14 -> Den ferdigtrente modellen som gjenkjenner hva vi ser på bilde.
-    # Linje 17, 18, 19 -> De variablene for knappene i gui vinduet for pause osv.
-    # Linje 22 -> De funksjonene som starter video streamen
-    # Linje 29 -> Oppdaterer  
-    # Linje  ->
-
-# YOLO-modellen
+# YOLO-modellen ferdig trent opp
 model = YOLO('yolov8n.pt')
 
-# Global variabel for å kontrollere om kameraet er på pause eller ikke
-paused = False
-cap = None
-running = False  # Variabel for å stoppe kameraet
+results = model(source = 0, show = True, conf = 0.4, save = False)
+""""
+bytte yolo modell til 9
+laste ned datasettet for å trene modellen på riktig måte
+""""""
+Trinn 1: Samle data
+Før du trener modellen, trenger du en datasett med bilder som inneholder runde baller i forskjellige farger. Du må også annotere (markere) disse ballene i bildene.
 
-# Funksjon for å starte kameraet
-def start_cam():
-    global paused, cap, running
-    if not running:
-        running = True
-        cap = cv2.VideoCapture(0)  # Webkamera
-        update_frame()
+a. Samle bilder:
+Ta bilder av ballene i forskjellige miljøer og belysning, slik at modellen lærer å kjenne igjen ballene under forskjellige forhold.
+Sørg for å inkludere ballene i forskjellige vinkler og avstander.
+b. Annotere bildene:
+For å annotere bildene kan du bruke et verktøy som LabelImg for å lage bounding boxes rundt ballene i hvert bilde. LabelImg støtter YOLO-formatet, som er nødvendig for treningsprosessen.
 
-# Funksjon for å oppdatere rammen fra kameraet
-def update_frame():
-    global paused, cap, running
-    if running:
-        if not paused:
-            ret, frame = cap.read()
-            if ret:
-                # YOLO-inference på den nåværende rammen
-                results = model(frame)
-                result_frame = results[0].plot()
+Last ned og installer LabelImg:
 
-                # Vis resultatene i OpenCV-vinduet
-                cv2.imshow('YOLO Objekt gjenkjenning', result_frame)
+Følg instruksjonene på LabelImg GitHub.
+Sørg for at du lagrer annotasjonene i YOLO-format.
+Annoter hver ball i bildene dine:
 
-        # Vent på "q" eller oppdater vinduet i løpet av 1 millisekund
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            stop_cam()
-
-        # Planlegg neste ramme i GUI-løkken
-        window.after(10, update_frame)
-
-# Funksjon for å pause kameraet
-def pause_cam():
-    global paused
-    paused = not paused  # Bytt mellom pause og start
-
-# Funksjon for å avslutte programmet
-def stop_cam():
-    global cap, running
-    running = False
-    if cap is not None:
-        cap.release()
-    cv2.destroyAllWindows()
-
-# Opprett Tkinter-vinduet
-
-window = tk.Tk()
-window.title("Webcam Control")
-
-# Opprett knapper
-start_button = Button(window, text="Start Cam", command=start_cam)
-start_button.pack()
-
-pause_button = Button(window, text="Pause/Resume Cam", command=pause_cam)
-pause_button.pack()
-
-stop_button = Button(window, text="Stop Cam", command=stop_cam)
-stop_button.pack()
-
-# Start GUI-løkken
-window.mainloop()
+Opprett to klasser: "gul ball" og "rød ball".
+Marker de runde ballene i hvert bilde, og spesifiser riktig klasse.
+Lagre annotasjonene i samme katalog som bildene. For hver bildefil (f.eks. image1.jpg), vil det være en tilsvarende annotasjonsfil (f.eks. image1.txt) som inneholder koordinatene for de annoterte objektene.
+"""
