@@ -5,7 +5,7 @@ model = YOLO('yolov8n.pt')
 
 results = model(source = 0, show = True, conf = 0.4, save = False)
 """"
-bytte yolo modell til 9
+OPPGAVER:
 laste ned datasettet for å trene modellen på riktig måte
 """"""
 Trinn 1: Samle data
