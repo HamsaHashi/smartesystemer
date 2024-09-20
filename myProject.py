@@ -1,6 +1,6 @@
 from ultralytics import YOLO
 
-#       INNEHOLD AV DETTE KODEN:
+#       INNEHOLD AV DETTE KODEN: 
     # Linje 14 -> Den ferdigtrente modellen som gjenkjenner hva vi ser på bilde.
     # Linje 17, 18, 19 -> De variablene for knappene i gui vinduet for pause osv.
     # Linje 22 -> De funksjonene som starter video streamen
