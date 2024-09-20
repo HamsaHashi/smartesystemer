@@ -1,7 +1,14 @@
 from ultralytics import YOLO
 
-# YOLO-modellen ferdig trent opp
-model = YOLO('yolov8n.pt')
+#       INNEHOLD AV DETTE KODEN:
+    # Linje 14 -> Den ferdigtrente modellen som gjenkjenner hva vi ser på bilde.
+    # Linje 17, 18, 19 -> De variablene for knappene i gui vinduet for pause osv.
+    # Linje 22 -> De funksjonene som starter video streamen
+    # Linje 29 -> Oppdaterer  
+    # Linje  ->
+
+# YOLO-modellen
+model = YOLO('yolov8n.pt') 
 
 results = model(source = 0, show = True, conf = 0.4, save = False)
 """"
