@@ -1,7 +1,6 @@
 import cv2
 from ultralytics import YOLO
 from time import sleep
-
 from picamera2 import Picamera2, Preview 
 #from picamera import PiCamera
 import time
@@ -32,7 +31,7 @@ if not picam2.isOpened():
     exit()
 
 # Minimum sikkerhet (50%) 
-MIN_CONFIDENCE = 0.5
+MIN_CONFIDENCE = 0.7
 
 # Funksjon for å vise resultater i sanntid
 while True:
