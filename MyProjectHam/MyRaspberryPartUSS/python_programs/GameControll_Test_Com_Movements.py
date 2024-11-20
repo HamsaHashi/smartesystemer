@@ -2,7 +2,7 @@ import pygame
 import serial
 import time
 
-arduino = serial.Serial('/dev/ttyACM0', 250000, timeout=1)
+arduino = serial.Serial('/dev/ttyACM1', 250000, timeout=1)
 time.sleep(2)
 
 pygame.init()
