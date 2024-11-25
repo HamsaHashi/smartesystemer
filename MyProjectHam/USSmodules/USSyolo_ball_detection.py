@@ -10,6 +10,8 @@ class YoloBallDetection:
         self.dist = dist
         self.newcameramtx = newcameramtx
         self.roi = roi
+        self.rvecs = []  # Rotasjonsvektorer (hent fra kalibreringsdata)
+        self.tvecs = []  # Translasjonsvektorer (hent fra kalibreringsdata)
 
     def undistort_frame(self, frame):
         undistorted = cv2.undistort(frame, self.mtx, self.dist, None, self.newcameramtx)
@@ -19,6 +21,47 @@ class YoloBallDetection:
     def detect_ball(self, frame):
         results = self.model(frame)
         return results
+    
+    def get_object_position(self, x, y):
+        #Beregner objektets posisjon i verdenskoordinater basert på bildekoordinater.
+        """Beregner objektets posisjon i verdenskoordinater basert på bildekoordinater."""
+        if not self.rvecs or not self.tvecs:
+            raise ValueError("Rotasjons- eller translasjonsvektorer er ikke initialisert.")
+        # Objektets 2D-punkt i bildet
+        image_point = np.array([[x, y]], dtype=np.float32)
+        # Beregner objektets posisjon i 3D
+        world_point, _ = cv2.projectPoints(
+            image_point, self.rvecs[0], self.tvecs[0], self.mtx, self.dist)
+        return world_point.flatten()
+
+
+    def color_filter(self, roi, class_name):
+        """Filtrer regionen av interesse (ROI) for å verifisere fargen."""
+        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+
+        # Definer fargeområder i HSV for blå, grønn og rød
+        if class_name == "Blue_ball":
+            lower_bound = np.array([100, 150, 50])
+            upper_bound = np.array([140, 255, 255])
+            mask = cv2.inRange(hsv, lower_bound, upper_bound)
+        elif class_name == "Green_ball":
+            lower_bound = np.array([35, 100, 50])
+            upper_bound = np.array([85, 255, 255])
+            mask = cv2.inRange(hsv, lower_bound, upper_bound)
+        elif class_name == "Red_ball":
+            lower_bound1 = np.array([0, 100, 50])
+            upper_bound1 = np.array([10, 255, 255])
+            lower_bound2 = np.array([170, 100, 50])
+            upper_bound2 = np.array([180, 255, 255])
+            mask1 = cv2.inRange(hsv, lower_bound1, upper_bound1)
+            mask2 = cv2.inRange(hsv, lower_bound2, upper_bound2)
+            mask = mask1 | mask2
+        else:
+            return False
+
+        # Sjekk om noen piksler innenfor fargeområdet er detektert
+        return cv2.countNonZero(mask) > 0
+
 
     def annotate_and_get_position(self, frame, results):
     #Annotate detected balls on the frame using YOLO's built-in method and apply color filtering."""

@@ -9,6 +9,8 @@ def load_calibration_data():
     data = np.load(calibration_path)
     mtx = data['cameraMatrix']
     dist = data['dist']
+    rvecs = data['rvecs']
+    tvecs = data['tvecs']
     frame_width, frame_height = 960, 720
     newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (frame_width, frame_height), 1, (frame_width, frame_height))
-    return mtx, dist, newcameramtx, roi
+    return mtx, dist, newcameramtx, roi, rvecs, tvecs
