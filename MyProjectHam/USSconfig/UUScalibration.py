@@ -13,4 +13,11 @@ def load_calibration_data():
     tvecs = data['tvecs']
     frame_width, frame_height = 960, 720
     newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (frame_width, frame_height), 1, (frame_width, frame_height))
+    
+     # Sørg for at dist er en 1D-array
+    if len(dist.shape) > 1:
+        dist = dist.flatten()
+    
     return mtx, dist, newcameramtx, roi, rvecs, tvecs
+
+

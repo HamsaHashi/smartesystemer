@@ -8,6 +8,8 @@ class YoloBallDetection:
         self.target_classes = {"Blue_ball": 1, "Green_ball": 2, "Red_ball": 0}
         self.mtx = mtx
         self.dist = dist
+        if len(self.dist.shape) > 1:
+            self.dist = self.dist.flatten()
         self.newcameramtx = newcameramtx
         self.roi = roi
         self.rvecs = []  # Rotasjonsvektorer (hent fra kalibreringsdata)
@@ -21,18 +23,47 @@ class YoloBallDetection:
     def detect_ball(self, frame):
         results = self.model(frame)
         return results
-    
+
     def get_object_position(self, x, y):
-        #Beregner objektets posisjon i verdenskoordinater basert på bildekoordinater.
-        """Beregner objektets posisjon i verdenskoordinater basert på bildekoordinater."""
-        if not self.rvecs or not self.tvecs:
-            raise ValueError("Rotasjons- eller translasjonsvektorer er ikke initialisert.")
-        # Objektets 2D-punkt i bildet
-        image_point = np.array([[x, y]], dtype=np.float32)
-        # Beregner objektets posisjon i 3D
-        world_point, _ = cv2.projectPoints(
-            image_point, self.rvecs[0], self.tvecs[0], self.mtx, self.dist)
-        return world_point.flatten()
+        """
+        Beregner objektets posisjon i verdenskoordinater basert på bildekoordinater.
+        """
+        try:
+            # Fjern forvrengning fra bildepunktet
+            undistorted_point = cv2.undistortPoints(
+                np.array([[x, y]], dtype=np.float32).reshape(-1, 1, 2),
+                cameraMatrix=self.mtx,
+                distCoeffs=self.dist
+            )
+
+            # Legg til en homogen koordinat (z=1) for 3D-transformasjon
+            undistorted_point = np.append(undistorted_point[0][0], 1.0).reshape(3, 1)
+
+            # Konverter rotasjonsvektor til rotasjonsmatrise
+            rvec = np.asarray(self.rvecs[0], dtype=np.float32).reshape((3, 1))
+            tvec = np.asarray(self.tvecs[0], dtype=np.float32).reshape((3, 1))
+            R, _ = cv2.Rodrigues(rvec)
+
+            # Invers rotasjonsmatrise
+            R_inv = np.linalg.inv(R)
+
+            # Omregn til verdenskoordinater
+            camera_point = R_inv @ (undistorted_point - tvec)
+            world_point = camera_point.flatten()
+
+            # Debugging: Skriv ut verdier for validering
+            print(f"Undistorted point: {undistorted_point}")
+            print(f"R: {R}")
+            print(f"R_inv: {R_inv}")
+            print(f"Camera point: {camera_point}")
+            print(f"World point: {world_point}")
+
+            return world_point
+
+        except cv2.error as e:
+            raise RuntimeError(f"OpenCV Error in get_object_position: {e}")
+        except Exception as e:
+            raise RuntimeError(f"General Error in get_object_position: {e}")
 
 
     def color_filter(self, roi, class_name):
@@ -62,9 +93,14 @@ class YoloBallDetection:
         # Sjekk om noen piksler innenfor fargeområdet er detektert
         return cv2.countNonZero(mask) > 0
 
-
     def annotate_and_get_position(self, frame, results):
-    #Annotate detected balls on the frame using YOLO's built-in method and apply color filtering."""
+        """
+        Annotate detected balls on the frame using YOLO's built-in method and apply color filtering.
+        """
+        # Sjekk om frame er gyldig
+        if frame is None or frame.size == 0:
+            raise ValueError("Invalid frame received from the camera.")
+        
         annotated_frame = results[0].plot()  # Use built-in method to draw bounding boxes and labels
     
         # Iterate through detections to apply color filtering
@@ -88,13 +124,12 @@ class YoloBallDetection:
                 world_coords = self.get_object_position(x_center, y_center)
 
                 print(f"Detected |{class_name}| at image coordinates ({x_center}, {y_center}) "
-                    f"and world coordinates {world_coords}")
+                      f"and world coordinates {world_coords}")
 
                 # Add text to the image with world coordinates
                 cv2.putText(annotated_frame, f"{class_name}: World {world_coords}",
-                        (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+                            (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
         return annotated_frame
-
 
     def apply_gamma_correction(self, frame, gamma=1.6):
         inv_gamma = 1.0 / gamma
